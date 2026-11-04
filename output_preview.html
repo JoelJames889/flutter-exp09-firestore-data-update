@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Experiment 9 Output - Firestore Data Update</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background-color: #090D16;
+      color: #E2E8F0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 30px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .orb-1 {
+      position: fixed;
+      top: -120px;
+      right: 12%;
+      width: 440px;
+      height: 440px;
+      background: radial-gradient(circle, rgba(249, 115, 22, 0.16) 0%, rgba(9, 13, 22, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-2 {
+      position: fixed;
+      bottom: -100px;
+      left: 10%;
+      width: 460px;
+      height: 460px;
+      background: radial-gradient(circle, rgba(251, 113, 133, 0.14) 0%, rgba(9, 13, 22, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .header-bar { max-width: 1000px; width: 100%; text-align: center; margin-bottom: 24px; position: relative; z-index: 1; }
+    .badge {
+      display: inline-block;
+      padding: 5px 14px;
+      background: rgba(249, 115, 22, 0.15);
+      color: #FB923C;
+      border: 1px solid rgba(249, 115, 22, 0.35);
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 { font-size: 26px; color: #FFFFFF; margin-bottom: 6px; font-weight: 700; }
+    p.subtitle { color: #94A3B8; font-size: 13.5px; }
+
+    .main-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 32px;
+      max-width: 1100px;
+      width: 100%;
+      align-items: flex-start;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Phone Shell */
+    .phone-mockup {
+      width: 380px;
+      height: 780px;
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 46px;
+      padding: 12px;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.9), 0 0 0 1px rgba(249, 115, 22, 0.25);
+      position: relative;
+    }
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: #090D16;
+      border-radius: 36px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* App Bar */
+    .app-bar {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 24px 16px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .app-title { font-size: 16px; font-weight: 700; color: #FFFFFF; }
+    .app-subtitle { font-size: 11px; color: #FB923C; }
+
+    /* Info Bar */
+    .info-bar {
+      background: rgba(249, 115, 22, 0.08);
+      border-bottom: 1px solid rgba(249, 115, 22, 0.2);
+      padding: 10px 14px;
+      font-size: 11px;
+      color: #FDBA74;
+    }
+
+    /* Employees List */
+    .content-area { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+
+    .emp-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+    .emp-card:hover { border-color: rgba(249, 115, 22, 0.35); background: rgba(255, 255, 255, 0.05); }
+
+    .emp-header { display: flex; justify-content: space-between; align-items: center; }
+    .emp-name { font-size: 14px; font-weight: 700; color: #FFFFFF; }
+    .status-tag {
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .tag-promoted { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .tag-active { background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .tag-probation { background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.4); }
+
+    .emp-details {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+    }
+    .role-label { color: #FDBA74; font-weight: 600; }
+    .salary-label { color: #34D399; font-weight: 700; }
+
+    .modify-btn {
+      background: rgba(249, 115, 22, 0.12);
+      border: 1px solid rgba(249, 115, 22, 0.35);
+      color: #FB923C;
+      border-radius: 10px;
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .modify-btn:hover { background: rgba(249, 115, 22, 0.2); }
+
+    /* Side Panel */
+    .side-panel {
+      flex: 1;
+      min-width: 320px;
+      max-width: 480px;
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .panel-title { font-size: 16px; font-weight: 700; color: #FFF; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; }
+    .info-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 4px 0; }
+    .info-label { color: #94A3B8; }
+    .info-value { color: #F1F5F9; font-weight: 600; text-align: right; }
+
+    .mutation-box {
+      background: #020617;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #FB923C;
+      line-height: 1.4;
+    }
+
+    .action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: #FFF;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { background: rgba(255, 255, 255, 0.14); }
+  </style>
+</head>
+<body>
+  <div class="orb-1"></div>
+  <div class="orb-2"></div>
+
+  <div class="header-bar">
+    <div class="badge">Experiment 09 Record Output</div>
+    <h1>Cloud Firestore Data Update & Modification</h1>
+    <p class="subtitle">Selective in-place field mutations via DocumentReference.update() with serverTimestamp audit</p>
+  </div>
+
+  <div class="main-container">
+    <!-- Phone Mockup -->
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        <div class="app-bar">
+          <div>
+            <div class="app-title">CloudStaff Modifier</div>
+            <div class="app-subtitle">Atomic In-Place Updates</div>
+          </div>
+        </div>
+
+        <div class="info-bar">
+          ⚡ Tap "Modify Fields" to trigger live doc.update() mutations.
+        </div>
+
+        <div class="content-area" id="empCardsContainer">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div class="side-panel">
+      <div class="panel-title">Firestore Document Mutation Specification</div>
+
+      <div class="info-row">
+        <span class="info-label">Experiment No:</span>
+        <span class="info-value">09</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Operation:</span>
+        <span class="info-value">DocumentReference.update()</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Granularity:</span>
+        <span class="info-value">Partial Field Mutation (Non-Destructive)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Audit Field:</span>
+        <span class="info-value">lastModified: FieldValue.serverTimestamp()</span>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <div style="font-size: 13px; font-weight: 700; color: #FFF; margin-bottom: 6px;">Executed Firestore Mutation Call</div>
+        <div class="mutation-box">
+await FirebaseFirestore.instance
+    .collection('employees')
+    .doc(docId)
+    .update({
+      'role': updatedRole,
+      'department': updatedDept,
+      'salary': updatedSalary,
+      'status': updatedStatus,
+      'lastModified': FieldValue.serverTimestamp(),
+    });
+        </div>
+      </div>
+
+      <button class="action-btn" onclick="window.print()">🖨️ Print Lab Output Record</button>
+    </div>
+  </div>
+
+  <script>
+    let employees = [
+      { id: 'doc_1', empId: 'EMP-201', name: 'Samantha Ray', department: 'Mobile Engineering', role: 'Lead Flutter Developer', salary: 115000, status: 'Promoted' },
+      { id: 'doc_2', empId: 'EMP-202', name: 'Daniel Kim', department: 'DevOps & SRE', role: 'Cloud Operations Specialist', salary: 92000, status: 'Active' },
+      { id: 'doc_3', empId: 'EMP-203', name: 'Maya Lin', department: 'Data Analytics', role: 'BI & Analytics Lead', salary: 104000, status: 'Active' }
+    ];
+
+    function render() {
+      const container = document.getElementById('empCardsContainer');
+      container.innerHTML = '';
+
+      employees.forEach(e => {
+        let tagClass = 'tag-active';
+        if (e.status === 'Promoted') tagClass = 'tag-promoted';
+        if (e.status === 'On Probation') tagClass = 'tag-probation';
+
+        const card = document.createElement('div');
+        card.className = 'emp-card';
+        card.innerHTML = `
+          <div class="emp-header">
+            <div>
+              <div class="emp-name">${e.name}</div>
+              <div style="font-size:10px; color:#64748B;">${e.empId} • ${e.department}</div>
+            </div>
+            <span class="status-tag ${tagClass}">${e.status}</span>
+          </div>
+          <div class="emp-details">
+            <span class="role-label">${e.role}</span>
+            <span class="salary-label">$${e.salary.toLocaleString()} /yr</span>
+          </div>
+          <button class="modify-btn" onclick="modifyEmployee('${e.id}')">
+            <span>✏️</span>
+            <span>Modify Document Fields</span>
+          </button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function modifyEmployee(id) {
+      const emp = employees.find(e => e.id === id);
+      if (!emp) return;
+
+      const newRole = prompt(`Modify Designation for ${emp.name}:`, emp.role);
+      if (!newRole) return;
+
+      const newSalStr = prompt(`Modify Compensation for ${emp.name}:`, emp.salary);
+      const newSalary = parseFloat(newSalStr);
+      if (isNaN(newSalary)) return;
+
+      const newStatus = prompt(`Update Status (Active / Promoted / On Probation):`, emp.status);
+
+      emp.role = newRole;
+      emp.salary = newSalary;
+      if (newStatus) emp.status = newStatus;
+
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
